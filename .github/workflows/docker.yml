@@ -17,12 +17,19 @@ jobs:
       - name: Build Docker image
         run: docker build -t qr-code-generator-app .
 
-      - name: Run container and generate QR code
-        run: docker run --rm -v ${{ github.workspace }}/qr_codes:/app/qr_codes qr-code-generator-app --url http://www.njit.edu
+      - name: Create qr_codes directory
+        run: mkdir -p ${{ github.workspace }}/qr_codes
 
+      - name: Run container and generate QR code
+        run: |
+          docker run -d --name qr-generator \
+            -v ${{ github.workspace }}/qr_codes:/app/qr_codes \
+            qr-code-generator-app --url http://www.njit.edu
+          docker wait qr-generator
+          
       - name: Verify output file was created
         run: |
-          if [ -z "$(ls -A qr_codes/)" ]; then
+          if [ -z "$(ls -A ${{ github.workspace }}/qr_codes/)" ]; then
             echo "No QR code generated — FAIL"
             exit 1
           else
