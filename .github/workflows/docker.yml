@@ -1,0 +1,30 @@
+name: Build and Test Docker Image
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: docker build -t qr-code-generator-app .
+
+      - name: Run container and generate QR code
+        run: docker run --rm -v ${{ github.workspace }}/qr_codes:/app/qr_codes qr-code-generator-app --url http://www.njit.edu
+
+      - name: Verify output file was created
+        run: |
+          if [ -z "$(ls -A qr_codes/)" ]; then
+            echo "No QR code generated — FAIL"
+            exit 1
+          else
+            echo "QR code file found — PASS"
+          fi
